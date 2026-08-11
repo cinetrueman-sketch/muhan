@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인사관리시스템</title>
+<style>
+:root{
+  --brand:#5b4bd6;
+  --brand-dark:#40349e;
+  --brand-light:#efedfd;
+  --brand-line:#d8d3f7;
+  --ink:#1c1c27;
+  --ink-2:#5a5a6e;
+  --ink-3:#8b8b9e;
+  --line:#e4e4ee;
+  --bg:#f4f4f9;
+  --panel:#ffffff;
+  --ok:#1d9e6a;
+  --warn:#d97706;
+  --danger:#d64545;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;}
+
+/* ---------- 상단 유틸바 ---------- */
+.utilbar{
+  background:var(--brand-dark);color:#cfc9f5;height:34px;display:flex;align-items:center;
+  justify-content:flex-end;gap:14px;padding:0 20px;font-size:12px;
+}
+.utilbar .sbox{display:flex;align-items:center;background:rgba(255,255,255,.14);border-radius:20px;padding:3px 6px 3px 12px;}
+.utilbar .sbox input{background:transparent;border:0;outline:0;color:#fff;font-size:12px;width:210px;}
+.utilbar .sbox input::placeholder{color:#b4acef;}
+.utilbar .sbox button{background:transparent;border:0;color:#fff;cursor:pointer;font-size:13px;}
+.utilbar a{color:#cfc9f5;text-decoration:none;}
+.utilbar a:hover{color:#fff;}
+.utilbar .logout{background:rgba(255,255,255,.18);color:#fff;border-radius:20px;padding:3px 12px;font-size:11px;letter-spacing:.06em;}
+
+/* ---------- 헤더 ---------- */
+.header{
+  background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-end;padding:0 20px;gap:22px;height:58px;
+}
+.tabstrip{display:flex;gap:4px;}
+.tabstrip .t{
+  padding:8px 20px;border-radius:10px 10px 0 0;font-size:12.5px;color:var(--ink-2);
+  background:#f0f0f7;border:1px solid var(--line);border-bottom:0;cursor:pointer;margin-bottom:-1px;
+}
+.tabstrip .t.on{background:#fff;color:var(--brand);font-weight:700;border-color:var(--brand-line);}
+.tabstrip .t .x{color:var(--ink-3);margin-left:8px;}
+.header .spacer{flex:1;}
+.header .who{padding-bottom:14px;font-size:12px;color:var(--ink-2);}
+.header .who b{color:var(--ink);}
+
+/* ---------- 글로벌 내비 ---------- */
+.gnb{background:var(--panel);border-bottom:1px solid var(--line);display:flex;padding:0 20px;box-shadow:0 1px 3px rgba(30,25,80,.04);overflow-x:auto;}
+.gnb div{padding:12px 24px;font-size:13.5px;font-weight:600;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+.gnb div:hover{color:var(--brand);}
+.gnb div.on{color:var(--brand);border-bottom-color:var(--brand);}
+
+/* ---------- 레이아웃 ---------- */
+.wrap{display:flex;gap:16px;padding:16px 20px 24px;align-items:flex-start;}
+.side{width:268px;flex:none;}
+.main{flex:1;min-width:0;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(30,25,80,.04);}
+.card + .card{margin-top:14px;}
+.card-hd{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);}
+.card-hd h2{margin:0;font-size:13.5px;font-weight:700;letter-spacing:-.01em;}
+.card-hd .cnt{font-size:11.5px;color:var(--ink-3);font-weight:600;}
+.card-hd .spacer{flex:1;}
+
+/* ---------- 사이드 ---------- */
+.sidehead{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:1px solid var(--line);}
+.sidehead .ico{width:34px;height:34px;border-radius:9px;background:var(--brand-light);color:var(--brand);display:grid;place-items:center;font-size:17px;}
+.sidehead .tt{font-size:15px;font-weight:800;}
+.sidehead .ds{font-size:11px;color:var(--ink-3);}
+.emplist{max-height:330px;overflow:auto;}
+.emprow{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid #f2f2f8;}
+.emprow:hover{background:#fafaff;}
+.emprow.on{background:var(--brand-light);box-shadow:inset 3px 0 0 var(--brand);}
+.emprow .av{width:30px;height:30px;border-radius:50%;background:#e8e6f9;color:var(--brand-dark);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;overflow:hidden;}
+.emprow .av img{width:100%;height:100%;object-fit:cover;}
+.emprow .nm{font-weight:700;font-size:13px;}
+.emprow .mt{font-size:11px;color:var(--ink-3);}
+.emprow .badge{margin-left:auto;font-size:10.5px;padding:2px 7px;border-radius:20px;background:#eaf7f1;color:var(--ok);font-weight:700;}
+.emprow .badge.off{background:#f2f2f6;color:var(--ink-3);}
+.searchbox{padding:12px 14px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.searchbox .full{grid-column:1/-1;}
+
+/* ---------- 폼 요소 ---------- */
+input,select,textarea{
+  width:100%;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:7px;
+  padding:6px 9px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fff;outline:0;
+}
+/* 날짜/숫자 입력은 브라우저(특히 사파리) 기본 최소 너비가 커서 옆 칸을 밀어냄 → 축소 허용 */
+input[type="date"]{padding:6px 5px;font-size:12px;-webkit-appearance:none;appearance:none;}
+input[type="date"]::-webkit-datetime-edit{padding:0;}
+input[type="date"]::-webkit-calendar-picker-indicator{margin:0;padding:0 0 0 2px;}
+input[type="number"]{padding-right:4px;}
+input:disabled,select:disabled,textarea:disabled{background:#f7f7fb;color:var(--ink-2);}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(91,75,214,.12);}
+textarea{resize:vertical;min-height:64px;}
+label.fl{display:block;font-size:11px;color:var(--ink-3);font-weight:700;margin-bottom:4px;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink-2);border-radius:7px;
+  padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn:hover{border-color:var(--brand-line);color:var(--brand);background:#faf9ff;}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;}
+.btn.pri:hover{background:var(--brand-dark);border-color:var(--brand-dark);color:#fff;}
+.btn.dgr:hover{border-color:#f0c4c4;color:var(--danger);background:#fff8f8;}
+.btn.mini{padding:4px 8px;font-size:11px;}
+.btn:disabled{opacity:.42;cursor:not-allowed;}
+.btn .k{opacity:.6;font-weight:500;margin-left:3px;}
+
+/* ---------- 인적사항 ---------- */
+.profile{display:flex;gap:18px;padding:16px;}
+.photo{width:126px;flex:none;}
+.photo .frame{
+  width:126px;height:158px;border-radius:10px;border:1px solid var(--line);overflow:hidden;background:#eef0f7;
+  display:grid;place-items:center;position:relative;cursor:pointer;
+}
+.photo .frame img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo .frame svg{width:100%;height:100%;}
+.photo .frame:hover::after{
+  content:"클릭 · 드래그하여 사진 첨부";position:absolute;inset:0;background:rgba(28,28,39,.62);color:#fff;
+  display:grid;place-items:center;text-align:center;font-size:11px;padding:10px;line-height:1.5;
+}
+.photo .frame.drag{border-color:var(--brand);box-shadow:0 0 0 3px rgba(91,75,214,.16);}
+.photo .pbtns{display:flex;gap:5px;margin-top:7px;}
+.photo .pbtns .btn{flex:1;text-align:center;padding:4px 2px;}
+.photo .cap{margin-top:6px;text-align:center;font-size:10.5px;color:var(--ink-3);}
+.photo .nmbig{margin-top:10px;text-align:center;}
+.photo .nmbig b{font-size:16px;}
+.photo .nmbig span{display:block;font-size:11.5px;color:var(--ink-3);}
+
+.grid{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px;min-width:0;}
+.grid2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px;padding:0 16px 14px;}
+.f{min-width:0;}
+.f.wide{grid-column:span 2;}
+.f.full{grid-column:1/-1;}
+.inline{display:flex;gap:6px;min-width:0;}
+.inline > *{min-width:0;}
+.inline .sm{width:56px;flex:none;padding-left:6px;padding-right:2px;}
+.subtitle{
+  grid-column:1/-1;margin-top:4px;padding-top:10px;border-top:1px dashed var(--line);
+  font-size:11.5px;font-weight:800;color:var(--brand);letter-spacing:.02em;
+}
+.actions{display:flex;gap:6px;justify-content:flex-end;padding:0 16px 14px;flex-wrap:wrap;}
+
+/* ---------- 인사고과 인셋 패널 ---------- */
+.inset{margin:0 16px 16px;border:1px solid var(--brand-line);border-radius:10px;overflow:hidden;background:#fbfaff;}
+.inset .card-hd{background:#f5f3fe;border-bottom:1px solid var(--brand-line);}
+.inset .card-hd h2{color:var(--brand-dark);}
+
+/* ---------- 탭 ---------- */
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--line);background:#fbfbfe;border-radius:var(--radius) var(--radius) 0 0;}
+.tabs button{border:1px solid transparent;background:transparent;color:var(--ink-2);font-size:12.5px;font-weight:600;
+  padding:8px 15px;border-radius:8px 8px 0 0;cursor:pointer;margin-bottom:-1px;}
+.tabs button:hover{color:var(--brand);background:#f3f1fd;}
+.tabs button.on{background:#fff;border-color:var(--line);border-bottom-color:#fff;color:var(--brand);font-weight:800;}
+
+/* ---------- 테이블 ---------- */
+.tblwrap{max-height:236px;overflow:auto;border-bottom:1px solid var(--line);background:#fff;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{position:sticky;top:0;background:#f6f6fb;color:var(--ink-2);font-weight:700;font-size:11.5px;
+  text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1;}
+tbody td{padding:8px 12px;border-bottom:1px solid #f3f3f8;color:var(--ink);}
+tbody tr{cursor:pointer;}
+tbody tr:hover{background:#fafaff;}
+tbody tr.on{background:var(--brand-light);box-shadow:inset 3px 0 0 var(--brand);}
+tbody tr.on td{font-weight:600;}
+td.num{text-align:right;font-variant-numeric:tabular-nums;}
+td.mono{font-variant-numeric:tabular-nums;color:var(--ink-2);}
+.empty{padding:34px;text-align:center;color:var(--ink-3);font-size:12.5px;}
+.score{display:inline-block;min-width:38px;text-align:center;padding:2px 8px;border-radius:20px;font-weight:800;font-size:11.5px;}
+.score.hi{background:#eaf7f1;color:var(--ok);}
+.score.mid{background:#fff5e6;color:var(--warn);}
+.score.low{background:#fdeeee;color:var(--danger);}
+
+/* ---------- 상세 폼 ---------- */
+.detail{padding:14px 16px;background:#fcfcff;}
+.detail .dgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;}
+.detail .dgrid .full{grid-column:1/-1;}
+.modebar{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mode{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;background:#f0f0f7;color:var(--ink-3);}
+.mode.insert{background:#eaf7f1;color:var(--ok);}
+.mode.edit{background:#fff5e6;color:var(--warn);}
+.hint{font-size:11.5px;color:var(--ink-3);}
+.avgbox{margin-left:auto;font-size:11.5px;color:var(--ink-2);}
+.avgbox b{color:var(--brand);font-size:14px;}
+
+/* ---------- 상태바 ---------- */
+.statusbar{display:flex;align-items:center;gap:14px;padding:9px 20px;background:#eeeef5;border-top:1px solid var(--line);
+  font-size:11.5px;color:var(--ink-3);}
+.statusbar .spacer{flex:1;}
+.toast{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;padding:11px 17px;border-radius:9px;
+  font-size:12.5px;box-shadow:0 8px 24px rgba(20,15,60,.28);opacity:0;transform:translateY(8px);
+  transition:.22s;pointer-events:none;z-index:99;}
+.toast.on{opacity:1;transform:none;}
+
+/* ---------- 반응형 ---------- */
+@media (max-width:1320px){
+  .grid,.grid2{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .detail .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media (max-width:980px){
+  .wrap{flex-direction:column;}
+  .side{width:100%;}
+  .grid,.grid2,.detail .dgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:620px){
+  .grid,.grid2,.detail .dgrid{grid-template-columns:1fr;}
+  .f.wide{grid-column:auto;}
+}
+</style>
+</head>
+<body>
+
+<div class="utilbar">
+  <div class="sbox"><input id="gsearch" placeholder="직원검색 (성명/부서/전화번호/업무)"><button>⌕</button></div>
+  <a href="#">개인/부재설정</a><a href="#">스크랩게시글</a>
+  <span class="logout">LOGOUT</span>
+</div>
+
+<div class="header">
+  <div class="tabstrip">
+    <div class="t">HOME</div>
+    <div class="t on">인사관리시스템 <span class="x">✕</span></div>
+    <div class="t">＋</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="who">담당자 <b>관리자</b> · 인사팀</div>
+</div>
+
+<div class="gnb">
+  <div>초기화면</div><div class="on">인사정보</div><div>인사기록카드</div><div>사원명부</div>
+  <div>증명서</div><div>사원현황</div><div>서식</div><div>기타</div>
+</div>
+
+<div class="wrap">
+  <!-- 좌측 사원 목록 -->
+  <div class="side">
+    <div class="card">
+      <div class="sidehead">
+        <div class="ico">👥</div>
+        <div><div class="tt">사원목록</div><div class="ds" id="listCount">총 0명</div></div>
+      </div>
+      <div class="emplist" id="empList"></div>
+      <div class="searchbox">
+        <select id="fStatus"><option value="">재직구분</option><option>재직</option><option>퇴직</option></select>
+        <select id="fDept"><option value="">부서</option></select>
+        <input class="full" id="fKeyword" placeholder="사원명 · 사원번호 검색">
+        <button class="btn full pri" id="btnSearch">검 색</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><h2>사원 관리</h2></div>
+      <div style="padding:12px 14px;display:grid;gap:7px;">
+        <button class="btn" id="btnEmpNew">＋ 신규 사원 등록</button>
+        <button class="btn dgr" id="btnEmpDel">사원 삭제</button>
+        <button class="btn" id="btnReset">초기 데이터로 복원</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 우측 본문 -->
+  <div class="main">
+    <div class="card">
+      <div class="card-hd">
+        <h2>인사정보 · 인적사항</h2>
+        <span class="cnt" id="empNoLabel">—</span>
+        <div class="spacer"></div>
+        <span class="mode" id="empMode">조회</span>
+      </div>
+
+      <div class="profile">
+        <div class="photo">
+          <div class="frame" id="photoFrame" title="클릭하거나 이미지를 끌어다 놓으면 사진이 첨부됩니다"></div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none">
+          <div class="pbtns">
+            <button class="btn mini" id="photoPick">사진 첨부</button>
+            <button class="btn mini dgr" id="photoDel">삭제</button>
+          </div>
+          <div class="cap">JPG · PNG (3×4 비율로 자동 저장)</div>
+          <div class="nmbig"><b id="pName">—</b><span id="pMeta">—</span></div>
+        </div>
+
+        <div class="grid" id="empGrid">
+          <div class="f"><label class="fl">사원번호</label><input id="e_empNo" disabled></div>
+          <div class="f"><label class="fl">이름</label><input id="e_name" disabled></div>
+          <div class="f"><label class="fl">한자이름</label><input id="e_hanja" disabled></div>
+
+          <div class="f"><label class="fl">생년월일</label>
+            <div class="inline"><input type="date" id="e_birth" disabled><select class="sm" id="e_birthCal" disabled><option>양</option><option>음</option></select></div></div>
+          <div class="f"><label class="fl">결혼기념일</label>
+            <div class="inline"><input type="date" id="e_wed" disabled><select class="sm" id="e_wedCal" disabled><option>양</option><option>음</option></select></div></div>
+          <div class="f"><label class="fl">주민번호</label><input id="e_ssn" disabled></div>
+
+          <div class="f"><label class="fl">성별</label><select id="e_gender" disabled><option>남</option><option>여</option></select></div>
+          <div class="f"><label class="fl">영문이름</label><input id="e_engName" disabled></div>
+          <div class="f"><label class="fl">종교</label><input id="e_religion" disabled></div>
+
+          <div class="subtitle">소속 / 발령</div>
+          <div class="f"><label class="fl">부서</label><input id="e_dept" disabled></div>
+          <div class="f"><label class="fl">직위</label><input id="e_position" disabled></div>
+          <div class="f"><label class="fl">직급</label><input id="e_grade" disabled></div>
+          <div class="f"><label class="fl">입사일자</label><input type="date" id="e_joinDate" disabled></div>
+          <!-- 퇴사일자 · 퇴직유형 : 소속/발령 섹션 맨 끝, 각각 한 줄 전체 폭 -->
+          <div class="f full"><label class="fl">퇴사일자</label><input type="date" id="e_leaveDate" disabled></div>
+          <div class="f full"><label class="fl">퇴직유형</label><select id="e_leaveType" disabled><option value=""></option><option>정년</option><option>의원면직</option><option>권고사직</option></select></div>
+        </div>
+      </div>
+
+      <!-- ▼ 인사고과 (연락처 자리) -->
+      <div class="inset" id="reviewBox"></div>
+
+      <div class="grid2">
+        <div class="subtitle" style="margin-top:0;padding-top:0;border-top:0;">연락처</div>
+        <div class="f"><label class="fl">휴대폰번호</label><input id="e_mobile" disabled></div>
+        <div class="f"><label class="fl">전화번호</label><input id="e_tel" disabled></div>
+        <div class="f"><label class="fl">내선번호</label><input id="e_ext" disabled></div>
+        <div class="f"><label class="fl">우편번호</label><input id="e_zip" disabled></div>
+        <div class="f wide"><label class="fl">현주소</label><input id="e_addr" disabled></div>
+        <div class="f full"><label class="fl">본적지</label><input id="e_origin" disabled></div>
+
+        <div class="subtitle">신체 / 신상</div>
+        <div class="f"><label class="fl">신장 (cm)</label><input type="number" step="0.1" id="e_height" disabled></div>
+        <div class="f"><label class="fl">체중 (kg)</label><input type="number" step="0.1" id="e_weight" disabled></div>
+        <div class="f"><label class="fl">시력 (좌 / 우)</label>
+          <div class="inline"><input type="number" step="0.1" id="e_eyeL" disabled><input type="number" step="0.1" id="e_eyeR" disabled></div></div>
+        <div class="f"><label class="fl">장애유형</label><input id="e_disType" disabled></div>
+        <div class="f"><label class="fl">장애등급</label><input id="e_disGrade" disabled></div>
+        <div class="f"><label class="fl">가족형태</label><select id="e_familyType" disabled><option>전체</option><option>단독</option><option>부양</option></select></div>
+        <div class="f"><label class="fl">취미</label><input id="e_hobby" disabled></div>
+        <div class="f"><label class="fl">특기</label><input id="e_specialty" disabled></div>
+        <div class="f"><label class="fl">최종학력</label><select id="e_education" disabled><option>고졸</option><option>전문대졸</option><option>대졸</option><option>석사</option><option>박사</option></select></div>
+        <div class="f"><label class="fl">최종졸업일</label><input type="date" id="e_gradDate" disabled></div>
+        <div class="f"><label class="fl">재직구분</label><select id="e_status" disabled><option>재직</option><option>퇴직</option></select></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="eNew">입력<span class="k">[I]</span></button>
+        <button class="btn" id="eEdit">수정<span class="k">[U]</span></button>
+        <button class="btn dgr" id="eDel">삭제<span class="k">[D]</span></button>
+        <button class="btn pri" id="eSave" disabled>저장<span class="k">[S]</span></button>
+        <button class="btn" id="eCancel" disabled>취소<span class="k">[C]</span></button>
+      </div>
+    </div>
+
+    <!-- 나머지 이력 탭 -->
+    <div class="card">
+      <div class="tabs" id="tabs"></div>
+      <div id="histBox"></div>
+    </div>
+  </div>
+</div>
+
+<div class="statusbar">
+  <span id="clock">—</span>
+  <span>|</span><span>관리자(담당)</span>
+  <span class="spacer"></span>
+  <span id="saveState">저장됨 · 브라우저 로컬 저장소</span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const KEY = "mportal_hr_v2";
+
+/* ================= 정의 ================= */
+const REVIEW = {id:"review", name:"인사고과", fields:[
+  {k:"date",  l:"평가일",   t:"date", w:110},
+  {k:"item",  l:"평가항목", t:"select", opts:["영업능력","성실근면","업무성과","리더십","협업","기획력"], w:120},
+  {k:"code",  l:"평가코드", t:"text", w:90},
+  {k:"score", l:"평가점수", t:"number", w:90, num:true, score:true},
+  {k:"total", l:"누계점수", t:"number", w:90, num:true},
+  {k:"note",  l:"평가내용", t:"textarea", full:true}
+]};
+
+const TABS = [
+  {id:"license", name:"자격증", fields:[
+    {k:"date",  l:"취득일",   t:"date", w:110},
+    {k:"name",  l:"자격증명", t:"text"},
+    {k:"org",   l:"발급기관", t:"text"},
+    {k:"grade", l:"등급",     t:"text", w:90},
+    {k:"note",  l:"비고",     t:"textarea", full:true}
+  ]},
+  {id:"military", name:"병역", fields:[
+    {k:"kind",  l:"군별",   t:"select", opts:["육군","해군","공군","해병대","의무경찰","면제","미필"], w:100},
+    {k:"rank",  l:"계급",   t:"text", w:90},
+    {k:"from",  l:"복무시작", t:"date", w:110},
+    {k:"to",    l:"복무종료", t:"date", w:110},
+    {k:"branch",l:"병과",   t:"text"},
+    {k:"note",  l:"면제/비고", t:"textarea", full:true}
+  ]},
+  {id:"health", name:"건강검진", fields:[
+    {k:"date", l:"검진일",   t:"date", w:110},
+    {k:"org",  l:"검진기관", t:"text"},
+    {k:"judge",l:"판정",     t:"select", opts:["정상","정상B","질환의심","유질환자"], w:100},
+    {k:"note", l:"소견",     t:"textarea", full:true}
+  ]},
+  {id:"assign", name:"발령사항", fields:[
+    {k:"date", l:"발령일",   t:"date", w:110},
+    {k:"kind", l:"발령구분", t:"select", opts:["신규채용","전보","승진","파견","복직","휴직","퇴직"], w:110},
+    {k:"dept", l:"부서",     t:"text"},
+    {k:"pos",  l:"직위",     t:"text", w:90},
+    {k:"note", l:"비고",     t:"textarea", full:true}
+  ]},
+  {id:"award", name:"포상/징계", fields:[
+    {k:"date", l:"일자", t:"date", w:110},
+    {k:"kind", l:"구분", t:"select", opts:["표창","포상","감사장","견책","감봉","정직","경고"], w:100},
+    {k:"title",l:"내용", t:"text"},
+    {k:"base", l:"근거", t:"text"},
+    {k:"note", l:"비고", t:"textarea", full:true}
+  ]},
+  {id:"edu", name:"교육/훈련", fields:[
+    {k:"from", l:"시작일", t:"date", w:110},
+    {k:"to",   l:"종료일", t:"date", w:110},
+    {k:"name", l:"교육명", t:"text"},
+    {k:"org",  l:"주관기관", t:"text"},
+    {k:"result",l:"이수결과", t:"select", opts:["이수","미이수","수료","우수수료"], w:100},
+    {k:"note", l:"비고", t:"textarea", full:true}
+  ]},
+  {id:"vacation", name:"휴가/병가", fields:[
+    {k:"from", l:"시작일", t:"date", w:110},
+    {k:"to",   l:"종료일", t:"date", w:110},
+    {k:"kind", l:"구분",   t:"select", opts:["연차","병가","경조사","공가","무급휴가"], w:100},
+    {k:"days", l:"일수",   t:"number", w:70, num:true},
+    {k:"reason",l:"사유",  t:"textarea", full:true}
+  ]},
+  {id:"project", name:"프로젝트", fields:[
+    {k:"from", l:"시작일", t:"date", w:110},
+    {k:"to",   l:"종료일", t:"date", w:110},
+    {k:"name", l:"프로젝트명", t:"text"},
+    {k:"role", l:"역할",   t:"text", w:110},
+    {k:"note", l:"비고",   t:"textarea", full:true}
+  ]}
+];
+
+/* ================= 초기 데이터 ================= */
+function seed(){
+  return {
+    employees:[
+      {id:"USER1", empNo:"USER1", name:"김헌준", hanja:"金憲俊", dept:"관리팀", position:"대리", grade:"7급",
+       photo:"", birth:"1980-08-08", birthCal:"양", wed:"", wedCal:"양", ssn:"800808-1112222", gender:"남",
+       engName:"Kim Hyun-jun", religion:"천주교", joinDate:"2012-12-04", leaveDate:"", leaveType:"",
+       mobile:"011-222-3333", tel:"032-222-3333", ext:"", zip:"405-220", addr:"인천 남동구 구월동", origin:"",
+       height:130.0, weight:72.5, eyeL:1.5, eyeR:2.0, disType:"중", disGrade:"", familyType:"전체",
+       hobby:"낚시", specialty:"컴퓨터, 격투기", education:"고졸", gradDate:"2010-01-01", status:"재직",
+       tabs:{
+         review:[
+           {date:"2009-11-11", item:"영업능력", code:"C1702", score:88, total:88, note:"신규 거래처 5개사 발굴. 목표 대비 118% 달성으로 팀 내 최고 실적."},
+           {date:"2008-12-12", item:"영업능력", code:"C1702", score:90, total:90, note:"주요 고객사 재계약 전량 성사. 협상 능력 우수."},
+           {date:"2007-11-11", item:"성실근면", code:"C1701", score:40, total:40, note:"근태 관리 미흡. 보고 체계 준수 필요."}
+         ],
+         license:[{date:"2011-06-20", name:"컴퓨터활용능력 1급", org:"대한상공회의소", grade:"1급", note:""}],
+         military:[{kind:"육군", rank:"병장", from:"2000-03-02", to:"2002-05-01", branch:"보병", note:"만기 전역"}],
+         health:[{date:"2009-04-15", org:"인천성모병원", judge:"정상B", note:"체중 관리 권고"}],
+         assign:[
+           {date:"2012-12-04", kind:"신규채용", dept:"관리팀", pos:"사원", note:"공채 12기"},
+           {date:"2016-01-01", kind:"승진", dept:"관리팀", pos:"대리", note:""}
+         ],
+         award:[{date:"2009-12-30", kind:"표창", title:"연간 우수사원 표창", base:"인사규정 제32조", note:""}],
+         edu:[{from:"2013-03-04", to:"2013-03-08", name:"신입사원 직무교육", org:"인재개발파트", result:"이수", note:""}],
+         vacation:[{from:"2009-08-03", to:"2009-08-07", kind:"연차", days:5, reason:"하계 휴가"}],
+         project:[{from:"2014-02-01", to:"2014-11-30", name:"사내 인사시스템 고도화", role:"현업 담당", note:""}]
+       }},
+      {id:"USER2", empNo:"USER2", name:"최승희", hanja:"", dept:"개발팀", position:"과장", grade:"5급",
+       photo:"", birth:"1985-03-21", birthCal:"양", wed:"", wedCal:"양", ssn:"850321-2000000", gender:"여",
+       engName:"Choi Seung-hee", religion:"무교", joinDate:"2010-03-02", leaveDate:"", leaveType:"",
+       mobile:"010-3333-4444", tel:"02-789-1234", ext:"2201", zip:"03925", addr:"서울 마포구 성암로 267", origin:"",
+       height:164.0, weight:52.0, eyeL:1.0, eyeR:1.2, disType:"", disGrade:"", familyType:"전체",
+       hobby:"등산", specialty:"프로그래밍", education:"대졸", gradDate:"2009-02-20", status:"재직",
+       tabs:{review:[{date:"2025-11-10", item:"업무성과", code:"C1703", score:92, total:92, note:"방송 송출 모니터링 시스템 개편 주도."}]}},
+      {id:"USER3", empNo:"USER3", name:"임실장", hanja:"", dept:"관리팀", position:"실장", grade:"3급",
+       photo:"", birth:"1972-11-02", birthCal:"음", wed:"", wedCal:"양", ssn:"721102-1000000", gender:"남",
+       engName:"Lim Sil-jang", religion:"불교", joinDate:"1998-01-05", leaveDate:"", leaveType:"",
+       mobile:"010-1111-2222", tel:"02-789-1000", ext:"2000", zip:"03925", addr:"서울 마포구 상암동", origin:"",
+       height:175.0, weight:80.0, eyeL:0.8, eyeR:0.9, disType:"", disGrade:"", familyType:"전체",
+       hobby:"골프", specialty:"협상", education:"대졸", gradDate:"1997-02-25", status:"재직",
+       tabs:{review:[{date:"2025-11-10", item:"리더십", code:"C1704", score:85, total:85, note:"조직 안정화 및 인력 운영 개선."}]}},
+      {id:"USER4", empNo:"USER4", name:"미정", hanja:"", dept:"영업팀", position:"사원", grade:"8급",
+       photo:"", birth:"1996-06-15", birthCal:"양", wed:"", wedCal:"양", ssn:"960615-2000000", gender:"여",
+       engName:"Mi Jung", religion:"", joinDate:"2024-09-01", leaveDate:"", leaveType:"",
+       mobile:"010-5555-6666", tel:"", ext:"3310", zip:"", addr:"경기 고양시 일산동구", origin:"",
+       height:160.0, weight:48.0, eyeL:1.5, eyeR:1.5, disType:"", disGrade:"", familyType:"전체",
+       hobby:"영화감상", specialty:"", education:"전문대졸", gradDate:"2024-02-16", status:"재직",
+       tabs:{review:[]}}
+    ],
+    selected:"USER1",
+    activeTab:"license"
+  };
+}
+
+/* ================= 상태 / 공용 ================= */
+let S = load();
+let empMode = "view", empDraft = null;
+
+function load(){
+  try{ const raw = localStorage.getItem(KEY);
+       if(raw){ const d = JSON.parse(raw); if(d && d.employees) return d; } }catch(e){}
+  return seed();
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); flash("저장됨 · " + nowStr()); }
+  catch(e){ flash("저장 실패 — 사진 용량이 크면 저장이 제한될 수 있습니다."); toast("로컬 저장소 용량 초과. 사진을 줄이거나 삭제해 주세요."); }
+}
+function flash(t){ document.getElementById("saveState").textContent = t; }
+function toast(msg){
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("on");
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove("on"), 2100);
+}
+function nowStr(){ const d=new Date(),p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+const cur = () => S.employees.find(e => e.id === S.selected) || S.employees[0] || null;
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function listOf(tabId){
+  const e = cur(); if(!e) return [];
+  e.tabs = e.tabs || {};
+  if(!e.tabs[tabId]) e.tabs[tabId] = [];
+  return e.tabs[tabId];
+}
+function scoreClass(v){ v=Number(v); return v>=80?"hi":v>=60?"mid":"low"; }
+
+/* ================= 레코드 편집기 (공용) ================= */
+function makeEditor(cfg){
+  const P = cfg.prefix;
+  const st = {mode:"view", index:-1, draft:null};
+  const el = id => document.getElementById(P+"_"+id);
+
+  cfg.mount.innerHTML = `
+    <div class="card-hd">
+      <h2 id="${P}_title">—</h2>
+      <span class="cnt" id="${P}_count">0건</span>
+      <div class="spacer"></div>
+      <div class="avgbox" id="${P}_avg"></div>
+    </div>
+    <div class="tblwrap"><table><thead><tr id="${P}_thead"></tr></thead><tbody id="${P}_tbody"></tbody></table></div>
+    <div class="detail">
+      <div class="modebar"><span class="mode" id="${P}_mode">조회</span><span class="hint" id="${P}_hint"></span></div>
+      <div class="dgrid" id="${P}_form"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="${P}_new">입력<span class="k">[I]</span></button>
+      <button class="btn" id="${P}_edit">수정<span class="k">[U]</span></button>
+      <button class="btn dgr" id="${P}_del">삭제<span class="k">[D]</span></button>
+      <button class="btn pri" id="${P}_save" disabled>저장<span class="k">[S]</span></button>
+      <button class="btn" id="${P}_cancel" disabled>취소<span class="k">[C]</span></button>
+      <button class="btn" id="${P}_close">닫기<span class="k">[X]</span></button>
+    </div>`;
+
+  function rows(){ return listOf(cfg.getTab().id); }
+
+  function renderTable(){
+    const tab = cfg.getTab(), list = rows();
+    el("title").textContent = tab.name;
+    el("count").textContent = `${list.length}건`;
+    el("thead").innerHTML = `<th style="width:44px">No</th>` +
+      tab.fields.map(f=>`<th ${f.w?`style="width:${f.w}px"`:""}>${esc(f.l)}</th>`).join("");
+
+    const tb = el("tbody");
+    if(!list.length){
+      tb.innerHTML = `<tr><td colspan="${tab.fields.length+1}"><div class="empty">등록된 ${esc(tab.name)} 이력이 없습니다. [입력] 버튼으로 추가하세요.</div></td></tr>`;
+    }else{
+      tb.innerHTML = list.map((r,i)=>{
+        const tds = tab.fields.map(f=>{
+          let v = r[f.k]==null?"":r[f.k];
+          if(f.score && v!=="") return `<td class="num"><span class="score ${scoreClass(v)}">${esc(v)}</span></td>`;
+          if(f.num) return `<td class="num">${esc(v)}</td>`;
+          if(f.t==="date") return `<td class="mono">${esc(v)}</td>`;
+          if(f.t==="textarea"){ const s=String(v); return `<td title="${esc(s)}">${esc(s.length>42?s.slice(0,42)+"…":s)}</td>`; }
+          return `<td>${esc(v)}</td>`;
+        }).join("");
+        return `<tr data-i="${i}" class="${i===st.index?"on":""}"><td class="mono">${i+1}</td>${tds}</tr>`;
+      }).join("");
+      tb.querySelectorAll("tr").forEach(tr => tr.onclick = () => {
+        if(st.mode!=="view") return;
+        st.index = Number(tr.dataset.i); renderTable(); renderForm();
+      });
+    }
+
+    const avg = el("avg");
+    if(cfg.showAvg && list.length){
+      const nums = list.map(r=>Number(r.score)).filter(n=>!isNaN(n));
+      if(nums.length){
+        const a = nums.reduce((x,y)=>x+y,0)/nums.length;
+        avg.innerHTML = `평균 평가점수 <b>${a.toFixed(1)}</b> / 최고 <b>${Math.max(...nums)}</b>`;
+      }else avg.innerHTML = "";
+    }else if(avg) avg.innerHTML = "";
+  }
+
+  function renderForm(){
+    const tab = cfg.getTab(), list = rows();
+    const data = st.mode==="view" ? (list[st.index]||null) : st.draft;
+    const dis = st.mode==="view";
+    el("form").innerHTML = tab.fields.map(f=>{
+      const v = data && data[f.k]!=null ? data[f.k] : "";
+      let ctl;
+      if(f.t==="select"){
+        ctl = `<select id="${P}f_${f.k}" ${dis?"disabled":""}><option value=""></option>` +
+              f.opts.map(o=>`<option ${String(v)===o?"selected":""}>${esc(o)}</option>`).join("") + `</select>`;
+      }else if(f.t==="textarea"){
+        ctl = `<textarea id="${P}f_${f.k}" ${dis?"disabled":""} placeholder="${dis?"":"내용을 입력하세요"}">${esc(v)}</textarea>`;
+      }else{
+        ctl = `<input id="${P}f_${f.k}" type="${f.t}" value="${esc(v)}" ${dis?"disabled":""}>`;
+      }
+      return `<div class="${f.full?"full":""}"><label class="fl">${esc(f.l)}</label>${ctl}</div>`;
+    }).join("");
+
+    const m = el("mode");
+    m.textContent = {view:"조회", insert:"신규 입력", edit:"수정 중"}[st.mode];
+    m.className = "mode " + (st.mode==="view" ? "" : st.mode);
+    el("hint").textContent = st.mode==="view"
+      ? (st.index>=0 ? `${tab.name} ${st.index+1}번 항목을 조회 중입니다.` : "목록에서 행을 선택하면 상세가 표시됩니다.")
+      : "입력 후 [저장]을 누르면 목록에 반영됩니다.";
+
+    el("save").disabled   = st.mode==="view";
+    el("cancel").disabled = st.mode==="view";
+    el("new").disabled    = st.mode!=="view" || !cur();
+    el("edit").disabled   = st.mode!=="view" || st.index<0;
+    el("del").disabled    = st.mode!=="view" || st.index<0;
+  }
+
+  function collect(){
+    const o = {};
+    cfg.getTab().fields.forEach(f=>{
+      const e = document.getElementById(P+"f_"+f.k); if(!e) return;
+      o[f.k] = f.num ? (e.value===""?"":Number(e.value)) : e.value;
+    });
+    return o;
+  }
+
+  el("new").onclick = () => {
+    if(!cur()){ toast("사원을 먼저 선택하세요."); return; }
+    st.mode="insert"; st.draft={}; st.index=-1;
+    const df = cfg.getTab().fields.find(f=>f.t==="date");
+    if(df) st.draft[df.k] = new Date().toISOString().slice(0,10);
+    renderTable(); renderForm();
+    const first = el("form").querySelector("input,select"); if(first) first.focus();
+  };
+  el("edit").onclick = () => { if(st.index<0) return; st.mode="edit"; st.draft=Object.assign({},rows()[st.index]); renderForm(); };
+  el("cancel").onclick = () => { st.mode="view"; st.draft=null; renderForm(); };
+  el("close").onclick = () => { st.mode="view"; st.draft=null; st.index=-1; renderTable(); renderForm(); toast("상세 화면을 닫았습니다."); };
+  el("del").onclick = () => {
+    if(st.index<0) return;
+    if(!confirm("선택한 항목을 삭제하시겠습니까?")) return;
+    rows().splice(st.index,1); st.index=-1; st.mode="view"; st.draft=null;
+    save(); renderTable(); renderForm(); renderTabs(); toast("삭제되었습니다.");
+  };
+  el("save").onclick = () => {
+    const tab = cfg.getTab(), o = collect(), req = tab.fields[0];
+    if(!o[req.k]){ toast(`${req.l} 항목은 필수입니다.`); return; }
+    if(tab.id==="review"){
+      if(o.score==="" || isNaN(o.score)){ toast("평가점수를 입력하세요."); return; }
+      if(o.score<0 || o.score>100){ toast("평가점수는 0~100 사이여야 합니다."); return; }
+    }
+    const list = rows();
+    if(st.mode==="insert"){ list.push(o); st.index = list.length-1; }
+    else list[st.index] = o;
+    const dk = tab.fields.find(f=>f.t==="date");
+    if(dk){ const t=list[st.index]; list.sort((a,b)=>String(b[dk.k]||"").localeCompare(String(a[dk.k]||""))); st.index=list.indexOf(t); }
+    st.mode="view"; st.draft=null; save(); renderTable(); renderForm(); renderTabs();
+    toast(`${tab.name} 정보가 저장되었습니다.`);
+  };
+
+  return {
+    render(){ renderTable(); renderForm(); },
+    reset(){ st.mode="view"; st.index=-1; st.draft=null; },
+    isEditing(){ return st.mode!=="view"; }
+  };
+}
+
+const reviewEditor = makeEditor({mount:document.getElementById("reviewBox"), prefix:"rv", getTab:()=>REVIEW, showAvg:true});
+const histEditor   = makeEditor({mount:document.getElementById("histBox"), prefix:"hs", getTab:()=>TABS.find(t=>t.id===S.activeTab)||TABS[0]});
+
+/* ================= 사원 목록 ================= */
+function renderList(){
+  const box = document.getElementById("empList");
+  const kw = document.getElementById("fKeyword").value.trim().toLowerCase();
+  const stf = document.getElementById("fStatus").value;
+  const dp = document.getElementById("fDept").value;
+  const list = S.employees.filter(e =>
+    (!kw || (e.name+e.empNo+e.dept).toLowerCase().includes(kw)) &&
+    (!stf || e.status === stf) && (!dp || e.dept === dp));
+
+  box.innerHTML = list.length ? list.map(e => `
+    <div class="emprow ${e.id===S.selected?"on":""}" data-id="${esc(e.id)}">
+      <div class="av">${e.photo?`<img src="${esc(e.photo)}" alt="">`:esc((e.name||"?").slice(-2))}</div>
+      <div><div class="nm">${esc(e.name||"(무명)")}</div><div class="mt">${esc(e.empNo)} · ${esc(e.dept)} · ${esc(e.position)}</div></div>
+      <div class="badge ${e.status==="재직"?"":"off"}">${esc(e.status||"")}</div>
+    </div>`).join("") : `<div class="empty">검색 결과가 없습니다.</div>`;
+
+  document.getElementById("listCount").textContent = `총 ${list.length}명 / 전체 ${S.employees.length}명`;
+  box.querySelectorAll(".emprow").forEach(r => r.onclick = () => {
+    if(empMode!=="view" || reviewEditor.isEditing() || histEditor.isEditing()){
+      if(!confirm("편집 중인 내용이 있습니다. 이동할까요?")) return;
+    }
+    empMode="view"; empDraft=null; reviewEditor.reset(); histEditor.reset();
+    S.selected = r.dataset.id; save(); renderAll();
+  });
+
+  const sel = document.getElementById("fDept"), keep = sel.value;
+  const depts = [...new Set(S.employees.map(e=>e.dept).filter(Boolean))];
+  sel.innerHTML = `<option value="">부서</option>` + depts.map(d=>`<option>${esc(d)}</option>`).join("");
+  sel.value = depts.includes(keep) ? keep : "";
+}
+
+/* ================= 인적사항 ================= */
+const EF = ["empNo","name","hanja","birth","birthCal","wed","wedCal","ssn","gender","engName","religion",
+  "dept","position","grade","joinDate","leaveDate","leaveType","mobile","tel","ext","zip","addr","origin",
+  "height","weight","eyeL","eyeR","disType","disGrade","familyType","hobby","specialty","education","gradDate","status"];
+
+function renderEmp(){
+  const e = (empMode==="view") ? cur() : empDraft;
+  const dis = empMode==="view";
+  EF.forEach(k => {
+    const el = document.getElementById("e_"+k); if(!el) return;
+    el.value = e && e[k]!=null ? e[k] : "";
+    el.disabled = dis;
+  });
+  document.getElementById("e_empNo").disabled = empMode!=="insert";
+
+  const c = cur();
+  document.getElementById("pName").textContent = (e&&e.name) || "—";
+  document.getElementById("pMeta").textContent = e ? `${e.dept||""} · ${e.position||""} · ${e.grade||""}` : "—";
+  document.getElementById("empNoLabel").textContent = e ? `사원번호 ${e.empNo||""}` : "—";
+  renderPhoto(e);
+
+  const m = document.getElementById("empMode");
+  m.textContent = {view:"조회", insert:"신규 입력", edit:"수정 중"}[empMode];
+  m.className = "mode " + (empMode==="view" ? "" : empMode);
+
+  document.getElementById("eSave").disabled   = empMode==="view";
+  document.getElementById("eCancel").disabled = empMode==="view";
+  document.getElementById("eNew").disabled    = empMode!=="view";
+  document.getElementById("eEdit").disabled   = empMode!=="view" || !c;
+  document.getElementById("eDel").disabled    = empMode!=="view" || !c;
+  document.getElementById("photoDel").disabled = !(e && e.photo);
+}
+
+function renderPhoto(e){
+  const f = document.getElementById("photoFrame");
+  if(e && e.photo) f.innerHTML = `<img src="${esc(e.photo)}" alt="증명사진">`;
+  else f.innerHTML = avatar((e&&e.name)||"", (e&&e.gender)||"남");
+}
+function avatar(name, gender){
+  const hue = gender==="여" ? 335 : 222;
+  const init = (name||"?").slice(-2);
+  return `<svg viewBox="0 0 126 158" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g${hue}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="hsl(${hue},46%,93%)"/><stop offset="1" stop-color="hsl(${hue},40%,84%)"/>
+    </linearGradient></defs>
+    <rect width="126" height="158" fill="url(#g${hue})"/>
+    <circle cx="63" cy="60" r="26" fill="hsl(${hue},34%,66%)"/>
+    <path d="M18 158c0-27 20-45 45-45s45 18 45 45z" fill="hsl(${hue},34%,66%)"/>
+    <text x="63" y="68" text-anchor="middle" font-size="22" font-weight="700"
+      font-family="sans-serif" fill="#fff">${esc(init)}</text></svg>`;
+}
+
+/* ---- 사진 첨부 ---- */
+function processImage(file){
+  if(!file || !/^image\//.test(file.type)){ toast("이미지 파일만 첨부할 수 있습니다."); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const W = 240, H = 300;
+      const cv = document.createElement("canvas");
+      cv.width = W; cv.height = H;
+      const ctx = cv.getContext("2d");
+      ctx.fillStyle = "#eef0f7"; ctx.fillRect(0,0,W,H);
+      const s = Math.max(W/img.width, H/img.height);
+      const w = img.width*s, h = img.height*s;
+      ctx.drawImage(img, (W-w)/2, (H-h)/2, w, h);
+      const data = cv.toDataURL("image/jpeg", 0.82);
+      const target = (empMode==="view") ? cur() : empDraft;
+      if(!target){ toast("사원을 먼저 선택하세요."); return; }
+      target.photo = data;
+      if(empMode==="view") save();
+      renderPhoto(target); renderList();
+      document.getElementById("photoDel").disabled = false;
+      toast(empMode==="view" ? "사진이 첨부·저장되었습니다." : "사진이 첨부되었습니다. [저장]을 눌러 확정하세요.");
+    };
+    img.onerror = () => toast("이미지를 읽을 수 없습니다.");
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById("photoPick").onclick = () => document.getElementById("photoInput").click();
+document.getElementById("photoFrame").onclick = () => document.getElementById("photoInput").click();
+document.getElementById("photoInput").onchange = ev => { processImage(ev.target.files[0]); ev.target.value=""; };
+document.getElementById("photoDel").onclick = () => {
+  const t = (empMode==="view") ? cur() : empDraft;
+  if(!t || !t.photo) return;
+  if(!confirm("첨부된 사진을 삭제하시겠습니까?")) return;
+  t.photo = "";
+  if(empMode==="view") save();
+  renderPhoto(t); renderList();
+  document.getElementById("photoDel").disabled = true;
+  toast("사진이 삭제되었습니다.");
+};
+["dragenter","dragover"].forEach(t => document.getElementById("photoFrame").addEventListener(t, e => {
+  e.preventDefault(); e.currentTarget.classList.add("drag"); }));
+["dragleave","drop"].forEach(t => document.getElementById("photoFrame").addEventListener(t, e => {
+  e.preventDefault(); e.currentTarget.classList.remove("drag"); }));
+document.getElementById("photoFrame").addEventListener("drop", e => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) processImage(f); });
+
+/* ---- 인적사항 CRUD ---- */
+function collectEmp(){
+  const o = {};
+  EF.forEach(k => { const el = document.getElementById("e_"+k); if(el) o[k] = el.value; });
+  ["height","weight","eyeL","eyeR"].forEach(k => o[k] = o[k]===""?"":Number(o[k]));
+  return o;
+}
+document.getElementById("eNew").onclick = () => {
+  empMode="insert";
+  empDraft={empNo:"", name:"", dept:"", position:"", grade:"", status:"재직", birthCal:"양", wedCal:"양",
+            gender:"남", familyType:"전체", education:"고졸", photo:"", tabs:{}};
+  renderEmp(); document.getElementById("e_empNo").focus();
+};
+document.getElementById("eEdit").onclick = () => {
+  if(!cur()) return; empMode="edit"; empDraft=Object.assign({},cur()); renderEmp(); document.getElementById("e_name").focus();
+};
+document.getElementById("eCancel").onclick = () => { empMode="view"; empDraft=null; renderEmp(); };
+document.getElementById("eSave").onclick = () => {
+  const o = collectEmp();
+  if(!o.empNo.trim()){ toast("사원번호를 입력하세요."); return; }
+  if(!o.name.trim()){ toast("이름을 입력하세요."); return; }
+  o.photo = empDraft ? (empDraft.photo||"") : "";
+  if(empMode==="insert"){
+    if(S.employees.some(e=>e.empNo===o.empNo)){ toast("이미 존재하는 사원번호입니다."); return; }
+    o.id = o.empNo; o.tabs = {};
+    S.employees.push(o); S.selected = o.id;
+  }else Object.assign(cur(), o);
+  empMode="view"; empDraft=null; save(); renderAll(); toast("인적사항이 저장되었습니다.");
+};
+document.getElementById("eDel").onclick = () => {
+  const e = cur(); if(!e) return;
+  if(!confirm(`[${e.name}] 사원 정보를 삭제하시겠습니까?\n인사고과 등 모든 이력이 함께 삭제됩니다.`)) return;
+  S.employees = S.employees.filter(x=>x.id!==e.id);
+  S.selected = S.employees[0] ? S.employees[0].id : null;
+  reviewEditor.reset(); histEditor.reset();
+  save(); renderAll(); toast("삭제되었습니다.");
+};
+document.getElementById("btnEmpNew").onclick = () => document.getElementById("eNew").click();
+document.getElementById("btnEmpDel").onclick = () => document.getElementById("eDel").click();
+document.getElementById("btnReset").onclick = () => {
+  if(!confirm("입력한 모든 내용이 사라지고 초기 데이터로 되돌립니다. 계속할까요?")) return;
+  S = seed(); empMode="view"; empDraft=null; reviewEditor.reset(); histEditor.reset();
+  save(); renderAll(); toast("초기 데이터로 복원되었습니다.");
+};
+
+/* ================= 이력 탭 ================= */
+function renderTabs(){
+  const box = document.getElementById("tabs");
+  box.innerHTML = TABS.map(t=>{
+    const n = ((cur()&&cur().tabs&&cur().tabs[t.id])||[]).length;
+    return `<button data-id="${t.id}" class="${t.id===S.activeTab?"on":""}">${esc(t.name)}${n?` <span style="opacity:.55">${n}</span>`:""}</button>`;
+  }).join("");
+  box.querySelectorAll("button").forEach(b => b.onclick = () => {
+    if(histEditor.isEditing() && !confirm("편집 중인 내용이 있습니다. 탭을 이동할까요?")) return;
+    S.activeTab = b.dataset.id; histEditor.reset(); save(); renderTabs(); histEditor.render();
+  });
+}
+
+/* ================= 검색 / 단축키 ================= */
+document.getElementById("btnSearch").onclick = renderList;
+document.getElementById("fKeyword").addEventListener("input", renderList);
+document.getElementById("fKeyword").addEventListener("keydown", e => { if(e.key==="Enter") renderList(); });
+document.getElementById("fStatus").onchange = renderList;
+document.getElementById("fDept").onchange = renderList;
+document.getElementById("gsearch").addEventListener("input", e => {
+  document.getElementById("fKeyword").value = e.target.value; renderList(); });
+
+document.addEventListener("keydown", e => {
+  if(!e.altKey) return;
+  const map = {i:"new", u:"edit", d:"del", s:"save", c:"cancel", x:"close"};
+  const act = map[e.key.toLowerCase()]; if(!act) return;
+  const inRev = document.getElementById("reviewBox").contains(document.activeElement);
+  const P = inRev ? "rv" : "hs";
+  const b = document.getElementById(P+"_"+act);
+  if(b && !b.disabled){ e.preventDefault(); b.click(); }
+});
+
+/* ================= 초기화 ================= */
+function renderAll(){ renderList(); renderEmp(); reviewEditor.render(); renderTabs(); histEditor.render(); }
+function tick(){
+  const d=new Date(), p=n=>String(n).padStart(2,"0");
+  const w=["일","월","화","수","목","금","토"][d.getDay()];
+  document.getElementById("clock").textContent =
+    `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} (${w}) ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+tick(); setInterval(tick,1000);
+renderAll();
+flash("불러옴 · 브라우저 로컬 저장소");
+})();
+</script>
+</body>
+</html>
